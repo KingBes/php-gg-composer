@@ -1,17 +1,34 @@
 module main
 
 import gg
-// import gx
 
-@[export:'new_context']
-fn new_context(configs gg.Config) &gg.Context
+import gx
+
+
+@[export: 'to_string']
+fn to_string(str &char) string {
+	return unsafe { str.vstring() }
+}
+
+@[export: 'to_color']
+fn to_color(r u8,g u8,b u8 ,a u8) gx.Color
 {
+    return gx.rgba(r,g,b,a)
+}
+
+@[export: 'new_context']
+fn new_context(configs gg.Config) &gg.Context {
 	return gg.new_context(configs)
 }
 
-@[export:'run']
-fn run(mut ctx gg.Context)
+@[export: 'begin']
+fn begin(mut ctx gg.Context)
 {
+    ctx.begin()
+}
+
+@[export: 'run']
+fn run(mut ctx gg.Context) {
 	ctx.run()
 }
 

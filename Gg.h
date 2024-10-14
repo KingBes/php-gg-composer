@@ -1,3 +1,5 @@
+typedef void (*ctx)(void *);
+
 struct string
 {
     unsigned char *str;
@@ -49,7 +51,7 @@ typedef struct Config
     bool always_on_top;
     Color bg_color;
     void *init_fn;
-    void *frame_fn;
+    ctx frame_fn;
     void *native_frame_fn;
     void *cleanup_fn;
     void *fail_fn;
@@ -228,6 +230,12 @@ struct Context
 };
 typedef struct Context Context;
 
+Color to_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+string to_string(char *str);
+
 Context *new_context(Config configs);
+
+void begin(Context *context);
+
 
 void run(Context *context);

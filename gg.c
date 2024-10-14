@@ -84,12 +84,12 @@ typedef struct StrIntpData StrIntpData;
 typedef struct stbi__Image stbi__Image;
 typedef struct stbi__LoadParams stbi__LoadParams;
 typedef struct strings__textscanner__TextScanner strings__textscanner__TextScanner;
-typedef struct math__DigitParams math__DigitParams;
-typedef struct math__DivResult math__DivResult;
-typedef struct math__ChebSeries math__ChebSeries;
 typedef struct gx__Color gx__Color;
 typedef struct gx__Image gx__Image;
 typedef struct gx__TextCfg gx__TextCfg;
+typedef struct math__DigitParams math__DigitParams;
+typedef struct math__DivResult math__DivResult;
+typedef struct math__ChebSeries math__ChebSeries;
 typedef struct os__Eof os__Eof;
 typedef struct os__NotExpected os__NotExpected;
 typedef struct os__File os__File;
@@ -2829,6 +2829,13 @@ struct strconv__BF_param {
 	bool rm_tail_zero;
 };
 
+struct gx__Color {
+	u8 r;
+	u8 g;
+	u8 b;
+	u8 a;
+};
+
 struct strconv__PrepNumber {
 	bool negative;
 	int exponent;
@@ -2862,13 +2869,6 @@ union strconv__Uf64 {
 
 struct gg__DrawPixelConfig {
 	f32 size;
-};
-
-struct gx__Color {
-	u8 r;
-	u8 g;
-	u8 b;
-	u8 a;
 };
 
 struct gg__FT {
@@ -2925,6 +2925,13 @@ struct gg__FTConfig {
 	Array_u8 bytes_italic;
 };
 
+struct gx__Image {
+	voidptr obj;
+	int id;
+	int width;
+	int height;
+};
+
 struct math__DigitParams {
 	int base;
 	bool reverse;
@@ -2935,13 +2942,6 @@ struct math__ChebSeries {
 	int order;
 	f64 a;
 	f64 b;
-};
-
-struct gx__Image {
-	voidptr obj;
-	int id;
-	int width;
-	int height;
 };
 
 struct os__NotExpected {
@@ -4380,6 +4380,23 @@ voidptr dl__open(string filename, int flags);
 bool dl__close(voidptr handle);
 voidptr dl__sym(voidptr handle, string symbol);
 string dl__dlerror(void);
+gx__Color gx__hex(int color);
+gx__Color gx__rgb(u8 r, u8 g, u8 b);
+gx__Color gx__rgba(u8 r, u8 g, u8 b, u8 a);
+gx__Color gx__Color__plus(gx__Color a, gx__Color b);
+gx__Color gx__Color__minus(gx__Color a, gx__Color b);
+gx__Color gx__Color__mult(gx__Color c, gx__Color c2);
+gx__Color gx__Color__div(gx__Color c, gx__Color c2);
+gx__Color gx__Color_over(gx__Color a, gx__Color b);
+bool gx__Color_eq(gx__Color c, gx__Color c2);
+string gx__Color_str(gx__Color c);
+int gx__Color_rgba8(gx__Color c);
+int gx__Color_bgra8(gx__Color c);
+int gx__Color_abgr8(gx__Color c);
+gx__Color gx__color_from_string(string s);
+string gx__Color_to_css_string(gx__Color c);
+bool gx__Image_is_empty(gx__Image i);
+string gx__TextCfg_to_css_string(gx__TextCfg* cfg);
 f64 math__inf(int sign);
 f64 math__nan(void);
 bool math__is_nan(f64 f);
@@ -4504,23 +4521,6 @@ f64 math__f64_from_bits(u64 b);
 f64 math__with_set_low_word(f64 f, u32 lo);
 f64 math__with_set_high_word(f64 f, u32 hi);
 u32 math__get_high_word(f64 f);
-gx__Color gx__hex(int color);
-gx__Color gx__rgb(u8 r, u8 g, u8 b);
-gx__Color gx__rgba(u8 r, u8 g, u8 b, u8 a);
-gx__Color gx__Color__plus(gx__Color a, gx__Color b);
-gx__Color gx__Color__minus(gx__Color a, gx__Color b);
-gx__Color gx__Color__mult(gx__Color c, gx__Color c2);
-gx__Color gx__Color__div(gx__Color c, gx__Color c2);
-gx__Color gx__Color_over(gx__Color a, gx__Color b);
-bool gx__Color_eq(gx__Color c, gx__Color c2);
-string gx__Color_str(gx__Color c);
-int gx__Color_rgba8(gx__Color c);
-int gx__Color_bgra8(gx__Color c);
-int gx__Color_abgr8(gx__Color c);
-gx__Color gx__color_from_string(string s);
-string gx__Color_to_css_string(gx__Color c);
-bool gx__Image_is_empty(gx__Image i);
-string gx__TextCfg_to_css_string(gx__TextCfg* cfg);
 Array_string os__args_after(string cut_word);
 Array_string os__args_before(string cut_word);
 bool os__debugger_present(void);
@@ -5134,8 +5134,14 @@ void gg__Modifier_clear(gg__Modifier* e, gg__Modifier flag_);
 void gg__Modifier_clear_all(gg__Modifier* e);
 void gg__Modifier_toggle(gg__Modifier* e, gg__Modifier flag_);
 gg__Modifier gg__Modifier__static__zero(void);
+VV_LOCAL_SYMBOL string main__to_string(char* str);
+VV_EXPORTED_SYMBOL string to_string(char* str); // exported fn main.to_string
+VV_LOCAL_SYMBOL gx__Color main__to_color(u8 r, u8 g, u8 b, u8 a);
+VV_EXPORTED_SYMBOL gx__Color to_color(u8 r, u8 g, u8 b, u8 a); // exported fn main.to_color
 VV_LOCAL_SYMBOL gg__Context* main__new_context(gg__Config configs);
 VV_EXPORTED_SYMBOL gg__Context* new_context(gg__Config configs); // exported fn main.new_context
+VV_LOCAL_SYMBOL void main__begin(gg__Context* ctx);
+VV_EXPORTED_SYMBOL void begin(gg__Context* ctx); // exported fn main.begin
 VV_LOCAL_SYMBOL void main__run(gg__Context* ctx);
 VV_EXPORTED_SYMBOL void run(gg__Context* ctx); // exported fn main.run
 VV_LOCAL_SYMBOL void main__main(void);
@@ -5288,6 +5294,30 @@ int _const_fontstash__invalid; // inited later
  const f64 _const_math__internal__max_long_f64_fact_arg = 1755.5; // precomputed2
 string _const_dl__dl_ext; // inited later
  const voidptr _const_dl__rtld_next = (voidptr)(0xffffffffffffffff); // precomputed2
+gx__Color _const_gx__black; // inited later
+gx__Color _const_gx__gray; // inited later
+gx__Color _const_gx__white; // inited later
+gx__Color _const_gx__red; // inited later
+gx__Color _const_gx__green; // inited later
+gx__Color _const_gx__blue; // inited later
+gx__Color _const_gx__yellow; // inited later
+gx__Color _const_gx__magenta; // inited later
+gx__Color _const_gx__cyan; // inited later
+gx__Color _const_gx__orange; // inited later
+gx__Color _const_gx__purple; // inited later
+gx__Color _const_gx__indigo; // inited later
+gx__Color _const_gx__pink; // inited later
+gx__Color _const_gx__violet; // inited later
+gx__Color _const_gx__dark_blue; // inited later
+gx__Color _const_gx__dark_gray; // inited later
+gx__Color _const_gx__dark_green; // inited later
+gx__Color _const_gx__dark_red; // inited later
+gx__Color _const_gx__light_blue; // inited later
+gx__Color _const_gx__light_gray; // inited later
+gx__Color _const_gx__light_green; // inited later
+gx__Color _const_gx__light_red; // inited later
+gx__HorizontalAlign _const_gx__align_left; // inited later
+gx__HorizontalAlign _const_gx__align_right; // inited later
  const u64 _const_math__uvnan = 9221120237041090561U; // precomputed2
  const u64 _const_math__uvinf = 9218868437227405312U; // precomputed2
  const u64 _const_math__uvneginf = 18442240474082181120U; // precomputed2
@@ -5430,30 +5460,6 @@ Array_f64 _const_math__tan_q; // inited later
  const f64 _const_math__tan_lossth = 1.073741824e+09; // precomputed2
 Array_f64 _const_math__tanh_p; // inited later
 Array_f64 _const_math__tanh_q; // inited later
-gx__Color _const_gx__black; // inited later
-gx__Color _const_gx__gray; // inited later
-gx__Color _const_gx__white; // inited later
-gx__Color _const_gx__red; // inited later
-gx__Color _const_gx__green; // inited later
-gx__Color _const_gx__blue; // inited later
-gx__Color _const_gx__yellow; // inited later
-gx__Color _const_gx__magenta; // inited later
-gx__Color _const_gx__cyan; // inited later
-gx__Color _const_gx__orange; // inited later
-gx__Color _const_gx__purple; // inited later
-gx__Color _const_gx__indigo; // inited later
-gx__Color _const_gx__pink; // inited later
-gx__Color _const_gx__violet; // inited later
-gx__Color _const_gx__dark_blue; // inited later
-gx__Color _const_gx__dark_gray; // inited later
-gx__Color _const_gx__dark_green; // inited later
-gx__Color _const_gx__dark_red; // inited later
-gx__Color _const_gx__light_blue; // inited later
-gx__Color _const_gx__light_gray; // inited later
-gx__Color _const_gx__light_green; // inited later
-gx__Color _const_gx__light_red; // inited later
-gx__HorizontalAlign _const_gx__align_left; // inited later
-gx__HorizontalAlign _const_gx__align_right; // inited later
  const u32 _const_os__handle_generic_read = 2147483648; // precomputed2
  const voidptr _const_os__invalid_handle_value = (voidptr)(0xffffffffffffffff); // precomputed2
  const u32 _const_os__status_access_violation = 3221225477; // precomputed2
@@ -5501,9 +5507,9 @@ sokol__sgl__Context _const_sokol__sgl__context; // inited later
 Array_fixed_int_17 _const_gg__small_circle_segments = {0, 2, 4, 6, 6, 8, 8, 13, 10, 18, 12, 12, 10, 13, 16, 15, 16}; // fixed array const
 sokol__gfx__PassAction _const_gg__dontcare_pass; // inited later
 gg__SSRecorderSettings* _const_gg__recorder_settings; // inited later
+Map_string_gx__Color _const_gx__string_colors; // inited later
 math__ChebSeries _const_math__sin_cs; // inited later
 math__ChebSeries _const_math__cos_cs; // inited later
-Map_string_gx__Color _const_gx__string_colors; // inited later
 Array_string _const_os__args; // inited later
 
 // V interface table:
@@ -17496,6 +17502,149 @@ string dl__dlerror(void) {
 #endif
 #if !defined(CUSTOM_DEFINE_no_sokol_app)
 #endif
+gx__Color gx__hex(int color) {
+	gx__Color _t1 = ((gx__Color){.r = ((u8)((((color >> 16)) & 0xFF))),.g = ((u8)((((color >> 8)) & 0xFF))),.b = ((u8)((((color >> 0)) & 0xFF))),.a = 255,});
+	return _t1;
+}
+
+gx__Color gx__rgb(u8 r, u8 g, u8 b) {
+	gx__Color _t1 = ((gx__Color){.r = r,.g = g,.b = b,.a = 255,});
+	return _t1;
+}
+
+gx__Color gx__rgba(u8 r, u8 g, u8 b, u8 a) {
+	gx__Color _t1 = ((gx__Color){.r = r,.g = g,.b = b,.a = a,});
+	return _t1;
+}
+
+gx__Color gx__Color__plus(gx__Color a, gx__Color b) {
+	int na = (int)(((int)(a.a)) + b.a);
+	int nr = (int)(((int)(a.r)) + b.r);
+	int ng = (int)(((int)(a.g)) + b.g);
+	int nb = (int)(((int)(a.b)) + b.b);
+	if (na > 255) {
+		na = 255;
+	}
+	if (nr > 255) {
+		nr = 255;
+	}
+	if (ng > 255) {
+		ng = 255;
+	}
+	if (nb > 255) {
+		nb = 255;
+	}
+	gx__Color _t1 = ((gx__Color){.r = ((u8)(nr)),.g = ((u8)(ng)),.b = ((u8)(nb)),.a = ((u8)(na)),});
+	return _t1;
+}
+
+gx__Color gx__Color__minus(gx__Color a, gx__Color b) {
+	u8 na = (a.a > b.a ? (a.a) : (b.a));
+	int nr = (int)(((int)(a.r)) - b.r);
+	int ng = (int)(((int)(a.g)) - b.g);
+	int nb = (int)(((int)(a.b)) - b.b);
+	if (na < 0) {
+		na = 0;
+	}
+	if (nr < 0) {
+		nr = 0;
+	}
+	if (ng < 0) {
+		ng = 0;
+	}
+	if (nb < 0) {
+		nb = 0;
+	}
+	gx__Color _t1 = ((gx__Color){.r = ((u8)(nr)),.g = ((u8)(ng)),.b = ((u8)(nb)),.a = ((u8)(na)),});
+	return _t1;
+}
+
+gx__Color gx__Color__mult(gx__Color c, gx__Color c2) {
+	gx__Color _t1 = ((gx__Color){.r = (u8)(c.r * c2.r),.g = (u8)(c.g * c2.g),.b = (u8)(c.b * c2.b),.a = (u8)(c.a * c2.a),});
+	return _t1;
+}
+
+gx__Color gx__Color__div(gx__Color c, gx__Color c2) {
+	gx__Color _t1 = ((gx__Color){.r = (u8)(c.r / c2.r),.g = (u8)(c.g / c2.g),.b = (u8)(c.b / c2.b),.a = (u8)(c.a / c2.a),});
+	return _t1;
+}
+
+gx__Color gx__Color_over(gx__Color a, gx__Color b) {
+	f32 aa = (f32)(((f32)(a.a)) / 255);
+	f32 ab = (f32)(((f32)(b.a)) / 255);
+	f32 ar = (f32)(aa + (f32)(ab * ((f32)(1 - aa))));
+	f32 rr = (f32)(((f32)((f32)(((f32)(a.r)) * aa) + (f32)((f32)(((f32)(b.r)) * ab) * ((f32)(1 - aa))))) / ar);
+	f32 gr = (f32)(((f32)((f32)(((f32)(a.g)) * aa) + (f32)((f32)(((f32)(b.g)) * ab) * ((f32)(1 - aa))))) / ar);
+	f32 br = (f32)(((f32)((f32)(((f32)(a.b)) * aa) + (f32)((f32)(((f32)(b.b)) * ab) * ((f32)(1 - aa))))) / ar);
+	gx__Color _t1 = ((gx__Color){.r = ((u8)(rr)),.g = ((u8)(gr)),.b = ((u8)(br)),.a = ((u8)((f32)(ar * 255))),});
+	return _t1;
+}
+
+bool gx__Color_eq(gx__Color c, gx__Color c2) {
+	bool _t1 = c.r == c2.r && c.g == c2.g && c.b == c2.b && c.a == c2.a;
+	return _t1;
+}
+
+string gx__Color_str(gx__Color c) {
+	string _t1 =  str_intp(5, _MOV((StrIntpData[]){{_SLIT("Color{"), 0xfe02, {.d_u8 = c.r}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.g}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.b}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.a}}, {_SLIT("}"), 0, { .d_c = 0 }}}));
+	return _t1;
+}
+
+// Attr: [inline]
+inline int gx__Color_rgba8(gx__Color c) {
+	int _t1 = ((int)(((((((u32)(c.r)) << 24U) | (((u32)(c.g)) << 16U)) | (((u32)(c.b)) << 8U)) | ((u32)(c.a)))));
+	return _t1;
+}
+
+// Attr: [inline]
+inline int gx__Color_bgra8(gx__Color c) {
+	int _t1 = ((int)(((((((u32)(c.b)) << 24U) | (((u32)(c.g)) << 16U)) | (((u32)(c.r)) << 8U)) | ((u32)(c.a)))));
+	return _t1;
+}
+
+// Attr: [inline]
+inline int gx__Color_abgr8(gx__Color c) {
+	int _t1 = ((int)(((((((u32)(c.a)) << 24U) | (((u32)(c.b)) << 16U)) | (((u32)(c.g)) << 8U)) | ((u32)(c.r)))));
+	return _t1;
+}
+
+gx__Color gx__color_from_string(string s) {
+	if (string_starts_with(s, _SLIT("#"))) {
+		string hex_str = string__plus(_SLIT("0x"), string_substr(s, 1, 2147483647));
+		gx__Color _t1 = gx__hex(string_int(hex_str));
+		return _t1;
+	} else {
+		gx__Color _t2 = (*(gx__Color*)map_get(ADDR(map, _const_gx__string_colors), &(string[]){s}, &(gx__Color[]){ (gx__Color){.r = 0,.g = 0,.b = 0,.a = 255,} }));
+		return _t2;
+	}
+	return (gx__Color){.r = 0,.g = 0,.b = 0,.a = 255,};
+}
+
+string gx__Color_to_css_string(gx__Color c) {
+	string _t1 =  str_intp(5, _MOV((StrIntpData[]){{_SLIT("rgba("), 0xfe02, {.d_u8 = c.r}}, {_SLIT(","), 0xfe02, {.d_u8 = c.g}}, {_SLIT(","), 0xfe02, {.d_u8 = c.b}}, {_SLIT(","), 0xfe02, {.d_u8 = c.a}}, {_SLIT(")"), 0, { .d_c = 0 }}}));
+	return _t1;
+}
+
+bool gx__Image_is_empty(gx__Image i) {
+	bool _t1 = i.obj == ((void*)0);
+	return _t1;
+}
+
+string gx__TextCfg_to_css_string(gx__TextCfg* cfg) {
+	string font_style = _SLIT("");
+	if (cfg->bold) {
+		font_style = string__plus(font_style, _SLIT("bold "));
+	}
+	if (cfg->mono) {
+		font_style = string__plus(font_style, _SLIT("mono "));
+	}
+	if (cfg->italic) {
+		font_style = string__plus(font_style, _SLIT("italic "));
+	}
+	string _t1 =  str_intp(4, _MOV((StrIntpData[]){{_SLIT0, 0xfe10, {.d_s = font_style}}, {_SLIT(" "), 0xfe07, {.d_i32 = cfg->size}}, {_SLIT("px "), 0xfe10, {.d_s = cfg->family}}, {_SLIT0, 0, { .d_c = 0 }}}));
+	return _t1;
+}
+
 f64 math__inf(int sign) {
 	u64 v = (sign >= 0 ? (_const_math__uvinf) : (_const_math__uvneginf));
 	f64 _t1 = math__f64_from_bits(v);
@@ -19888,149 +20037,6 @@ inline f64 math__with_set_high_word(f64 f, u32 hi) {
 // Attr: [inline]
 inline u32 math__get_high_word(f64 f) {
 	u32 _t1 = ((u32)((math__f64_bits(f) >> 32U)));
-	return _t1;
-}
-
-gx__Color gx__hex(int color) {
-	gx__Color _t1 = ((gx__Color){.r = ((u8)((((color >> 16)) & 0xFF))),.g = ((u8)((((color >> 8)) & 0xFF))),.b = ((u8)((((color >> 0)) & 0xFF))),.a = 255,});
-	return _t1;
-}
-
-gx__Color gx__rgb(u8 r, u8 g, u8 b) {
-	gx__Color _t1 = ((gx__Color){.r = r,.g = g,.b = b,.a = 255,});
-	return _t1;
-}
-
-gx__Color gx__rgba(u8 r, u8 g, u8 b, u8 a) {
-	gx__Color _t1 = ((gx__Color){.r = r,.g = g,.b = b,.a = a,});
-	return _t1;
-}
-
-gx__Color gx__Color__plus(gx__Color a, gx__Color b) {
-	int na = (int)(((int)(a.a)) + b.a);
-	int nr = (int)(((int)(a.r)) + b.r);
-	int ng = (int)(((int)(a.g)) + b.g);
-	int nb = (int)(((int)(a.b)) + b.b);
-	if (na > 255) {
-		na = 255;
-	}
-	if (nr > 255) {
-		nr = 255;
-	}
-	if (ng > 255) {
-		ng = 255;
-	}
-	if (nb > 255) {
-		nb = 255;
-	}
-	gx__Color _t1 = ((gx__Color){.r = ((u8)(nr)),.g = ((u8)(ng)),.b = ((u8)(nb)),.a = ((u8)(na)),});
-	return _t1;
-}
-
-gx__Color gx__Color__minus(gx__Color a, gx__Color b) {
-	u8 na = (a.a > b.a ? (a.a) : (b.a));
-	int nr = (int)(((int)(a.r)) - b.r);
-	int ng = (int)(((int)(a.g)) - b.g);
-	int nb = (int)(((int)(a.b)) - b.b);
-	if (na < 0) {
-		na = 0;
-	}
-	if (nr < 0) {
-		nr = 0;
-	}
-	if (ng < 0) {
-		ng = 0;
-	}
-	if (nb < 0) {
-		nb = 0;
-	}
-	gx__Color _t1 = ((gx__Color){.r = ((u8)(nr)),.g = ((u8)(ng)),.b = ((u8)(nb)),.a = ((u8)(na)),});
-	return _t1;
-}
-
-gx__Color gx__Color__mult(gx__Color c, gx__Color c2) {
-	gx__Color _t1 = ((gx__Color){.r = (u8)(c.r * c2.r),.g = (u8)(c.g * c2.g),.b = (u8)(c.b * c2.b),.a = (u8)(c.a * c2.a),});
-	return _t1;
-}
-
-gx__Color gx__Color__div(gx__Color c, gx__Color c2) {
-	gx__Color _t1 = ((gx__Color){.r = (u8)(c.r / c2.r),.g = (u8)(c.g / c2.g),.b = (u8)(c.b / c2.b),.a = (u8)(c.a / c2.a),});
-	return _t1;
-}
-
-gx__Color gx__Color_over(gx__Color a, gx__Color b) {
-	f32 aa = (f32)(((f32)(a.a)) / 255);
-	f32 ab = (f32)(((f32)(b.a)) / 255);
-	f32 ar = (f32)(aa + (f32)(ab * ((f32)(1 - aa))));
-	f32 rr = (f32)(((f32)((f32)(((f32)(a.r)) * aa) + (f32)((f32)(((f32)(b.r)) * ab) * ((f32)(1 - aa))))) / ar);
-	f32 gr = (f32)(((f32)((f32)(((f32)(a.g)) * aa) + (f32)((f32)(((f32)(b.g)) * ab) * ((f32)(1 - aa))))) / ar);
-	f32 br = (f32)(((f32)((f32)(((f32)(a.b)) * aa) + (f32)((f32)(((f32)(b.b)) * ab) * ((f32)(1 - aa))))) / ar);
-	gx__Color _t1 = ((gx__Color){.r = ((u8)(rr)),.g = ((u8)(gr)),.b = ((u8)(br)),.a = ((u8)((f32)(ar * 255))),});
-	return _t1;
-}
-
-bool gx__Color_eq(gx__Color c, gx__Color c2) {
-	bool _t1 = c.r == c2.r && c.g == c2.g && c.b == c2.b && c.a == c2.a;
-	return _t1;
-}
-
-string gx__Color_str(gx__Color c) {
-	string _t1 =  str_intp(5, _MOV((StrIntpData[]){{_SLIT("Color{"), 0xfe02, {.d_u8 = c.r}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.g}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.b}}, {_SLIT(", "), 0xfe02, {.d_u8 = c.a}}, {_SLIT("}"), 0, { .d_c = 0 }}}));
-	return _t1;
-}
-
-// Attr: [inline]
-inline int gx__Color_rgba8(gx__Color c) {
-	int _t1 = ((int)(((((((u32)(c.r)) << 24U) | (((u32)(c.g)) << 16U)) | (((u32)(c.b)) << 8U)) | ((u32)(c.a)))));
-	return _t1;
-}
-
-// Attr: [inline]
-inline int gx__Color_bgra8(gx__Color c) {
-	int _t1 = ((int)(((((((u32)(c.b)) << 24U) | (((u32)(c.g)) << 16U)) | (((u32)(c.r)) << 8U)) | ((u32)(c.a)))));
-	return _t1;
-}
-
-// Attr: [inline]
-inline int gx__Color_abgr8(gx__Color c) {
-	int _t1 = ((int)(((((((u32)(c.a)) << 24U) | (((u32)(c.b)) << 16U)) | (((u32)(c.g)) << 8U)) | ((u32)(c.r)))));
-	return _t1;
-}
-
-gx__Color gx__color_from_string(string s) {
-	if (string_starts_with(s, _SLIT("#"))) {
-		string hex_str = string__plus(_SLIT("0x"), string_substr(s, 1, 2147483647));
-		gx__Color _t1 = gx__hex(string_int(hex_str));
-		return _t1;
-	} else {
-		gx__Color _t2 = (*(gx__Color*)map_get(ADDR(map, _const_gx__string_colors), &(string[]){s}, &(gx__Color[]){ (gx__Color){.r = 0,.g = 0,.b = 0,.a = 255,} }));
-		return _t2;
-	}
-	return (gx__Color){.r = 0,.g = 0,.b = 0,.a = 255,};
-}
-
-string gx__Color_to_css_string(gx__Color c) {
-	string _t1 =  str_intp(5, _MOV((StrIntpData[]){{_SLIT("rgba("), 0xfe02, {.d_u8 = c.r}}, {_SLIT(","), 0xfe02, {.d_u8 = c.g}}, {_SLIT(","), 0xfe02, {.d_u8 = c.b}}, {_SLIT(","), 0xfe02, {.d_u8 = c.a}}, {_SLIT(")"), 0, { .d_c = 0 }}}));
-	return _t1;
-}
-
-bool gx__Image_is_empty(gx__Image i) {
-	bool _t1 = i.obj == ((void*)0);
-	return _t1;
-}
-
-string gx__TextCfg_to_css_string(gx__TextCfg* cfg) {
-	string font_style = _SLIT("");
-	if (cfg->bold) {
-		font_style = string__plus(font_style, _SLIT("bold "));
-	}
-	if (cfg->mono) {
-		font_style = string__plus(font_style, _SLIT("mono "));
-	}
-	if (cfg->italic) {
-		font_style = string__plus(font_style, _SLIT("italic "));
-	}
-	string _t1 =  str_intp(4, _MOV((StrIntpData[]){{_SLIT0, 0xfe10, {.d_s = font_style}}, {_SLIT(" "), 0xfe07, {.d_i32 = cfg->size}}, {_SLIT("px "), 0xfe10, {.d_s = cfg->family}}, {_SLIT0, 0, { .d_c = 0 }}}));
 	return _t1;
 }
 
@@ -28441,6 +28447,26 @@ inline gg__Modifier gg__Modifier__static__zero(void) {
 }
 
 // Attr: [export]
+VV_LOCAL_SYMBOL string main__to_string(char* str) {
+	string _t1 = char_vstring(str);
+	return _t1;
+}
+// export alias: to_string -> main__to_string
+string to_string(char* str) {
+	return main__to_string(str);
+}
+
+// Attr: [export]
+VV_LOCAL_SYMBOL gx__Color main__to_color(u8 r, u8 g, u8 b, u8 a) {
+	gx__Color _t1 = gx__rgba(r, g, b, a);
+	return _t1;
+}
+// export alias: to_color -> main__to_color
+gx__Color to_color(u8 r, u8 g, u8 b, u8 a) {
+	return main__to_color(r, g, b, a);
+}
+
+// Attr: [export]
 VV_LOCAL_SYMBOL gg__Context* main__new_context(gg__Config configs) {
 	gg__Context* _t1 = gg__new_context(configs);
 	return _t1;
@@ -28448,6 +28474,15 @@ VV_LOCAL_SYMBOL gg__Context* main__new_context(gg__Config configs) {
 // export alias: new_context -> main__new_context
 gg__Context* new_context(gg__Config configs) {
 	return main__new_context(configs);
+}
+
+// Attr: [export]
+VV_LOCAL_SYMBOL void main__begin(gg__Context* ctx) {
+	gg__Context_begin(ctx);
+}
+// export alias: begin -> main__begin
+void begin(gg__Context* ctx) {
+	return main__begin(ctx);
 }
 
 // Attr: [export]
@@ -28491,101 +28526,6 @@ void _vinit(int ___argc, voidptr ___argv) {
 }
 	// Initializations of consts for module dl
 	_const_dl__dl_ext = dl__get_shared_library_extension();
-	// Initializations of consts for module math
-	_const_math__min_i32 = ((i32)(-2147483648));
-	_const_math__max_i32 = ((i32)(2147483647));
-	_const_math__min_i64 = ((i64)((int_literal)(-9223372036854775807 - 1)));
-	_const_math__max_i64 = ((i64)(9223372036854775807));
-	_const_math__bernoulli = new_array_from_c_array_noscan(10, 10, sizeof(f64), _MOV((f64[10]){
-		(float_literal)(1.0 / (12.0)), (float_literal)(-1.0 / (360.0)), (float_literal)(1.0 / (1260.0)), (float_literal)(-1.0 / (1680.0)), (float_literal)(5.0 / (5940.0)), (float_literal)(-691.0 / (360360.0)), (float_literal)(7.0 / (1092.0)), (float_literal)(-3617.0 / (122400.0)), (float_literal)(43867.0 / (243576.0)),
-		(float_literal)(-174611.0 / (125400.0))}));
-	_const_math__factorials_table = new_array_from_c_array_noscan(171, 171, sizeof(f64), _MOV((f64[171]){
-		1.000000000000000000000e+0, 1.000000000000000000000e+0, 2.000000000000000000000e+0, 6.000000000000000000000e+0, 2.400000000000000000000e+1, 1.200000000000000000000e+2, 7.200000000000000000000e+2, 5.040000000000000000000e+3, 4.032000000000000000000e+4,
-		3.628800000000000000000e+5, 3.628800000000000000000e+6, 3.991680000000000000000e+7, 4.790016000000000000000e+8, 6.227020800000000000000e+9, 8.717829120000000000000e+10, 1.307674368000000000000e+12, 2.092278988800000000000e+13,
-		3.556874280960000000000e+14, 6.402373705728000000000e+15, 1.216451004088320000000e+17, 2.432902008176640000000e+18, 5.109094217170944000000e+19, 1.124000727777607680000e+21, 2.585201673888497664000e+22, 6.204484017332394393600e+23,
-		1.551121004333098598400e+25, 4.032914611266056355840e+26, 1.088886945041835216077e+28, 3.048883446117138605015e+29, 8.841761993739701954544e+30, 2.652528598121910586363e+32, 8.222838654177922817726e+33, 2.631308369336935301672e+35,
-		8.683317618811886495518e+36, 2.952327990396041408476e+38, 1.033314796638614492967e+40, 3.719933267899012174680e+41, 1.376375309122634504632e+43, 5.230226174666011117600e+44, 2.039788208119744335864e+46, 8.159152832478977343456e+47,
-		3.345252661316380710817e+49, 1.405006117752879898543e+51, 6.041526306337383563736e+52, 2.658271574788448768044e+54, 1.196222208654801945620e+56, 5.502622159812088949850e+57, 2.586232415111681806430e+59, 1.241391559253607267086e+61,
-		6.082818640342675608723e+62, 3.041409320171337804361e+64, 1.551118753287382280224e+66, 8.065817517094387857166e+67, 4.274883284060025564298e+69, 2.308436973392413804721e+71, 1.269640335365827592597e+73, 7.109985878048634518540e+74,
-		4.052691950487721675568e+76, 2.350561331282878571829e+78, 1.386831185456898357379e+80, 8.320987112741390144276e+81, 5.075802138772247988009e+83, 3.146997326038793752565e+85, 1.982608315404440064116e+87, 1.268869321858841641034e+89,
-		8.247650592082470666723e+90, 5.443449390774430640037e+92, 3.647111091818868528825e+94, 2.480035542436830599601e+96, 1.711224524281413113725e+98, 1.197857166996989179607e+100, 8.504785885678623175212e+101, 6.123445837688608686152e+103,
-		4.470115461512684340891e+105, 3.307885441519386412260e+107, 2.480914081139539809195e+109, 1.885494701666050254988e+111, 1.451830920282858696341e+113, 1.132428117820629783146e+115, 8.946182130782975286851e+116, 7.156945704626380229481e+118,
-		5.797126020747367985880e+120, 4.753643337012841748421e+122, 3.945523969720658651190e+124, 3.314240134565353266999e+126, 2.817104114380550276949e+128, 2.422709538367273238177e+130, 2.107757298379527717214e+132, 1.854826422573984391148e+134,
-		1.650795516090846108122e+136, 1.485715964481761497310e+138, 1.352001527678402962552e+140, 1.243841405464130725548e+142, 1.156772507081641574759e+144, 1.087366156656743080274e+146, 1.032997848823905926260e+148, 9.916779348709496892096e+149,
-		9.619275968248211985333e+151, 9.426890448883247745626e+153, 9.332621544394415268170e+155, 9.332621544394415268170e+157, 9.425947759838359420852e+159, 9.614466715035126609269e+161, 9.902900716486180407547e+163, 1.029901674514562762385e+166,
-		1.081396758240290900504e+168, 1.146280563734708354534e+170, 1.226520203196137939352e+172, 1.324641819451828974500e+174, 1.443859583202493582205e+176, 1.588245541522742940425e+178, 1.762952551090244663872e+180, 1.974506857221074023537e+182,
-		2.231192748659813646597e+184, 2.543559733472187557120e+186, 2.925093693493015690688e+188, 3.393108684451898201198e+190, 3.969937160808720895402e+192, 4.684525849754290656574e+194, 5.574585761207605881323e+196, 6.689502913449127057588e+198,
-		8.094298525273443739682e+200, 9.875044200833601362412e+202, 1.214630436702532967577e+205, 1.506141741511140879795e+207, 1.882677176888926099744e+209, 2.372173242880046885677e+211, 3.012660018457659544810e+213, 3.856204823625804217357e+215,
-		4.974504222477287440390e+217, 6.466855489220473672507e+219, 8.471580690878820510985e+221, 1.118248651196004307450e+224, 1.487270706090685728908e+226, 1.992942746161518876737e+228, 2.690472707318050483595e+230, 3.659042881952548657690e+232,
-		5.012888748274991661035e+234, 6.917786472619488492228e+236, 9.615723196941089004197e+238, 1.346201247571752460588e+241, 1.898143759076170969429e+243, 2.695364137888162776589e+245, 3.854370717180072770522e+247, 5.550293832739304789551e+249,
-		8.047926057471991944849e+251, 1.174997204390910823948e+254, 1.727245890454638911203e+256, 2.556323917872865588581e+258, 3.808922637630569726986e+260, 5.713383956445854590479e+262, 8.627209774233240431623e+264, 1.311335885683452545607e+267,
-		2.006343905095682394778e+269, 3.089769613847350887959e+271, 4.789142901463393876336e+273, 7.471062926282894447084e+275, 1.172956879426414428192e+278, 1.853271869493734796544e+280, 2.946702272495038326504e+282, 4.714723635992061322407e+284,
-		7.590705053947218729075e+286, 1.229694218739449434110e+289, 2.004401576545302577600e+291, 3.287218585534296227263e+293, 5.423910666131588774984e+295, 9.003691705778437366474e+297, 1.503616514864999040201e+300, 2.526075744973198387538e+302,
-		4.269068009004705274939e+304, 7.257415615307998967397e+306}));
-	_const_math__log_factorials_table = new_array_from_c_array_noscan(172, 172, sizeof(f64), _MOV((f64[172]){
-		0.000000000000000000000e+0, 0.000000000000000000000e+0, 6.931471805599453094172e-1, 1.791759469228055000812e+0, 3.178053830347945619647e+0, 4.787491742782045994248e+0, 6.579251212010100995060e+0, 8.525161361065414300166e+0, 1.060460290274525022842e+1,
-		1.280182748008146961121e+1, 1.510441257307551529523e+1, 1.750230784587388583929e+1, 1.998721449566188614952e+1, 2.255216385312342288557e+1, 2.519122118273868150009e+1, 2.789927138384089156609e+1, 3.067186010608067280376e+1,
-		3.350507345013688888401e+1, 3.639544520803305357622e+1, 3.933988418719949403622e+1, 4.233561646075348502966e+1, 4.538013889847690802616e+1, 4.847118135183522387964e+1, 5.160667556776437357045e+1, 5.478472939811231919009e+1,
-		5.800360522298051993929e+1, 6.126170176100200198477e+1, 6.455753862700633105895e+1, 6.788974313718153498289e+1, 7.125703896716800901007e+1, 7.465823634883016438549e+1, 7.809222355331531063142e+1, 8.155795945611503717850e+1,
-		8.505446701758151741396e+1, 8.858082754219767880363e+1, 9.213617560368709248333e+1, 9.571969454214320248496e+1, 9.933061245478742692933e+1, 1.029681986145138126988e+2, 1.066317602606434591262e+2, 1.103206397147573954291e+2,
-		1.140342117814617032329e+2, 1.177718813997450715388e+2, 1.215330815154386339623e+2, 1.253172711493568951252e+2, 1.291239336391272148826e+2, 1.329525750356163098828e+2, 1.368027226373263684696e+2, 1.406739236482342593987e+2,
-		1.445657439463448860089e+2, 1.484777669517730320675e+2, 1.524095925844973578392e+2, 1.563608363030787851941e+2, 1.603311282166309070282e+2, 1.643201122631951814118e+2, 1.683274454484276523305e+2, 1.723527971391628015638e+2,
-		1.763958484069973517152e+2, 1.804562914175437710518e+2, 1.845338288614494905025e+2, 1.886281734236715911873e+2, 1.927390472878449024360e+2, 1.968661816728899939914e+2, 2.010093163992815266793e+2, 2.051681994826411985358e+2,
-		2.093425867525368356464e+2, 2.135322414945632611913e+2, 2.177369341139542272510e+2, 2.219564418191303339501e+2, 2.261905483237275933323e+2, 2.304390435657769523214e+2, 2.347017234428182677427e+2, 2.389783895618343230538e+2,
-		2.432688490029827141829e+2, 2.475729140961868839366e+2, 2.518904022097231943772e+2, 2.562211355500095254561e+2, 2.605649409718632093053e+2, 2.649216497985528010421e+2, 2.692910976510198225363e+2, 2.736731242856937041486e+2,
-		2.780675734403661429141e+2, 2.824742926876303960274e+2, 2.868931332954269939509e+2, 2.913239500942703075662e+2, 2.957666013507606240211e+2, 3.002209486470141317540e+2, 3.046868567656687154726e+2, 3.091641935801469219449e+2,
-		3.136528299498790617832e+2, 3.181526396202093268500e+2, 3.226634991267261768912e+2, 3.271852877037752172008e+2, 3.317178871969284731381e+2, 3.362611819791984770344e+2, 3.408150588707990178690e+2, 3.453794070622668541074e+2,
-		3.499541180407702369296e+2, 3.545390855194408088492e+2, 3.591342053695753987760e+2, 3.637393755555634901441e+2, 3.683544960724047495950e+2, 3.729794688856890206760e+2, 3.776141978739186564468e+2, 3.822585887730600291111e+2,
-		3.869125491232175524822e+2, 3.915759882173296196258e+2, 3.962488170517915257991e+2, 4.009309482789157454921e+2, 4.056222961611448891925e+2, 4.103227765269373054205e+2, 4.150323067282496395563e+2, 4.197508055995447340991e+2,
-		4.244781934182570746677e+2, 4.292143918666515701285e+2, 4.339593239950148201939e+2, 4.387129141861211848399e+2, 4.434750881209189409588e+2, 4.482457727453846057188e+2, 4.530248962384961351041e+2, 4.578123879812781810984e+2,
-		4.626081785268749221865e+2, 4.674121995716081787447e+2, 4.722243839269805962399e+2, 4.770446654925856331047e+2, 4.818729792298879342285e+2, 4.867092611368394122258e+2, 4.915534482232980034989e+2, 4.964054784872176206648e+2,
-		5.012652908915792927797e+2, 5.061328253420348751997e+2, 5.110080226652360267439e+2, 5.158908245878223975982e+2, 5.207811737160441513633e+2, 5.256790135159950627324e+2, 5.305842882944334921812e+2, 5.354969431801695441897e+2,
-		5.404169241059976691050e+2, 5.453441777911548737966e+2, 5.502786517242855655538e+2, 5.552202941468948698523e+2, 5.601690540372730381305e+2, 5.651248810948742988613e+2, 5.700877257251342061414e+2, 5.750575390247102067619e+2,
-		5.800342727671307811636e+2, 5.850178793888391176022e+2, 5.900083119756178539038e+2, 5.950055242493819689670e+2, 6.000094705553274281080e+2, 6.050201058494236838580e+2, 6.100373856862386081868e+2, 6.150612662070848845750e+2,
-		6.200917041284773200381e+2, 6.251286567308909491967e+2, 6.301720818478101958172e+2, 6.352219378550597328635e+2, 6.402781836604080409209e+2, 6.453407786934350077245e+2, 6.504096828956552392500e+2, 6.554848567108890661717e+2,
-		6.605662610758735291676e+2, 6.656538574111059132426e+2, 6.707476076119126755767e+2, 6.758474740397368739994e+2, 6.809534195136374546094e+2, 6.860654073019939978423e+2, 6.911834011144107529496e+2, 6.963073650938140118743e+2,
-		7.014372638087370853465e+2, 7.065730622457873471107e+2, 7.117147258022900069535e+2}));
-	_const_math__gamma_p = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){1.60119522476751861407e-04, 1.19135147006586384913e-03, 1.04213797561761569935e-02, 4.76367800457137231464e-02, 2.07448227648435975150e-01, 4.94214826801497100753e-01, 9.99999999999999996796e-01}));
-	_const_math__gamma_q = new_array_from_c_array_noscan(8, 8, sizeof(f64), _MOV((f64[8]){-2.31581873324120129819e-05, 5.39605580493303397842e-04, -4.45641913851797240494e-03, 1.18139785222060435552e-02, 3.58236398605498653373e-02, -2.34591795718243348568e-01, 7.14304917030273074085e-02, 1.00000000000000000320e+00}));
-	_const_math__gamma_s = new_array_from_c_array_noscan(5, 5, sizeof(f64), _MOV((f64[5]){7.87311395793093628397e-04, -2.29549961613378126380e-04, -2.68132617805781232825e-03, 3.47222221605458667310e-03, 8.33333333333482257126e-02}));
-	_const_math__lgamma_a = new_array_from_c_array_noscan(12, 12, sizeof(f64), _MOV((f64[12]){
-		7.72156649015328655494e-02, 3.22467033424113591611e-01, 6.73523010531292681824e-02, 2.05808084325167332806e-02, 7.38555086081402883957e-03, 2.89051383673415629091e-03, 1.19270763183362067845e-03, 5.10069792153511336608e-04, 2.20862790713908385557e-04,
-		1.08011567247583939954e-04, 2.52144565451257326939e-05, 4.48640949618915160150e-05}));
-	_const_math__lgamma_r = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){1.0, 1.39200533467621045958e+00, 7.21935547567138069525e-01, 1.71933865632803078993e-01, 1.86459191715652901344e-02, 7.77942496381893596434e-04, 7.32668430744625636189e-06}));
-	_const_math__lgamma_s = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){-7.72156649015328655494e-02, 2.14982415960608852501e-01, 3.25778796408930981787e-01, 1.46350472652464452805e-01, 2.66422703033638609560e-02, 1.84028451407337715652e-03, 3.19475326584100867617e-05}));
-	_const_math__lgamma_t = new_array_from_c_array_noscan(15, 15, sizeof(f64), _MOV((f64[15]){
-		4.83836122723810047042e-01, -1.47587722994593911752e-01, 6.46249402391333854778e-02, -3.27885410759859649565e-02, 1.79706750811820387126e-02, -1.03142241298341437450e-02, 6.10053870246291332635e-03, -3.68452016781138256760e-03, 2.25964780900612472250e-03,
-		-1.40346469989232843813e-03, 8.81081882437654011382e-04, -5.38595305356740546715e-04, 3.15632070903625950361e-04, -3.12754168375120860518e-04, 3.35529192635519073543e-04}));
-	_const_math__lgamma_u = new_array_from_c_array_noscan(6, 6, sizeof(f64), _MOV((f64[6]){-7.72156649015328655494e-02, 6.32827064025093366517e-01, 1.45492250137234768737e+00, 9.77717527963372745603e-01, 2.28963728064692451092e-01, 1.33810918536787660377e-02}));
-	_const_math__lgamma_v = new_array_from_c_array_noscan(6, 6, sizeof(f64), _MOV((f64[6]){1.0, 2.45597793713041134822e+00, 2.12848976379893395361e+00, 7.69285150456672783825e-01, 1.04222645593369134254e-01, 3.21709242282423911810e-03}));
-	_const_math__lgamma_w = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){4.18938533204672725052e-01, 8.33333333333329678849e-02, -2.77777777728775536470e-03, 7.93650558643019558500e-04, -5.95187557450339963135e-04, 8.36339918996282139126e-04, -1.63092934096575273989e-03}));
-	_const_math__pow10tab = new_array_from_c_array_noscan(32, 32, sizeof(f64), _MOV((f64[32]){
-		((f64)(1e+00)), 1e+01, 1e+02, 1e+03, 1e+04, 1e+05, 1e+06, 1e+07, 1e+08,
-		1e+09, 1e+10, 1e+11, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16,
-		1e+17, 1e+18, 1e+19, 1e+20, 1e+21, 1e+22, 1e+23, 1e+24,
-		1e+25, 1e+26, 1e+27, 1e+28, 1e+29, 1e+30, 1e+31}));
-	_const_math__pow10postab32 = new_array_from_c_array_noscan(10, 10, sizeof(f64), _MOV((f64[10]){
-		((f64)(1e+00)), 1e+32, 1e+64, 1e+96, 1e+128, 1e+160, 1e+192, 1e+224, 1e+256,
-		1e+288}));
-	_const_math__pow10negtab32 = new_array_from_c_array_noscan(11, 11, sizeof(f64), _MOV((f64[11]){
-		((f64)(1e-00)), 1e-32, 1e-64, 1e-96, 1e-128, 1e-160, 1e-192, 1e-224, 1e-256,
-		1e-288, 1e-320}));
-	_const_math__sin_data = new_array_from_c_array_noscan(12, 12, sizeof(f64), _MOV((f64[12]){
-		-0.3295190160663511504173, 0.0025374284671667991990, 0.0006261928782647355874, -4.6495547521854042157541e-06, -5.6917531549379706526677e-07, 3.7283335140973803627866e-09, 3.0267376484747473727186e-10, -1.7400875016436622322022e-12, -1.0554678305790849834462e-13,
-		5.3701981409132410797062e-16, 2.5984137983099020336115e-17, -1.1821555255364833468288e-19}));
-	_const_math__cos_data = new_array_from_c_array_noscan(11, 11, sizeof(f64), _MOV((f64[11]){
-		0.165391825637921473505668118136, -0.00084852883845000173671196530195, -0.000210086507222940730213625768083, 1.16582269619760204299639757584e-6, 1.43319375856259870334412701165e-7, -7.4770883429007141617951330184e-10, -6.0969994944584252706997438007e-11, 2.90748249201909353949854872638e-13, 1.77126739876261435667156490461e-14,
-		-7.6896421502815579078577263149e-17, -3.7363121133079412079201377318e-18}));
-	_const_math__tan_p = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){-1.30936939181383777646e+4, 1.15351664838587416140e+6, -1.79565251976484877988e+7}));
-	_const_math__tan_q = new_array_from_c_array_noscan(5, 5, sizeof(f64), _MOV((f64[5]){1.00000000000000000000e+0, 1.36812963470692954678e+4, -1.32089234440210967447e+6, 2.50083801823357915839e+7, -5.38695755929454629881e+7}));
-	_const_math__tanh_p = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){-9.64399179425052238628e-1, -9.92877231001918586564e+1, -1.61468768441708447952e+3}));
-	_const_math__tanh_q = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){1.12811678491632931402e+2, 2.23548839060100448583e+3, 4.84406305325125486048e+3}));
-{
-	_const_math__sin_cs = ((math__ChebSeries){.c = _const_math__sin_data,.order = 11,.a = -1,.b = 1,});
-}
-{
-	_const_math__cos_cs = ((math__ChebSeries){.c = _const_math__cos_data,.order = 10,.a = -1,.b = 1,});
-}
 	// Initializations of consts for module gx
 {
 	_const_gx__black = ((gx__Color){.r = 0,.g = 0,.b = 0,.a = 255,});
@@ -28707,6 +28647,101 @@ void _vinit(int ___argc, voidptr ___argv) {
 	})
 )
 ;
+}
+	// Initializations of consts for module math
+	_const_math__min_i32 = ((i32)(-2147483648));
+	_const_math__max_i32 = ((i32)(2147483647));
+	_const_math__min_i64 = ((i64)((int_literal)(-9223372036854775807 - 1)));
+	_const_math__max_i64 = ((i64)(9223372036854775807));
+	_const_math__bernoulli = new_array_from_c_array_noscan(10, 10, sizeof(f64), _MOV((f64[10]){
+		(float_literal)(1.0 / (12.0)), (float_literal)(-1.0 / (360.0)), (float_literal)(1.0 / (1260.0)), (float_literal)(-1.0 / (1680.0)), (float_literal)(5.0 / (5940.0)), (float_literal)(-691.0 / (360360.0)), (float_literal)(7.0 / (1092.0)), (float_literal)(-3617.0 / (122400.0)), (float_literal)(43867.0 / (243576.0)),
+		(float_literal)(-174611.0 / (125400.0))}));
+	_const_math__factorials_table = new_array_from_c_array_noscan(171, 171, sizeof(f64), _MOV((f64[171]){
+		1.000000000000000000000e+0, 1.000000000000000000000e+0, 2.000000000000000000000e+0, 6.000000000000000000000e+0, 2.400000000000000000000e+1, 1.200000000000000000000e+2, 7.200000000000000000000e+2, 5.040000000000000000000e+3, 4.032000000000000000000e+4,
+		3.628800000000000000000e+5, 3.628800000000000000000e+6, 3.991680000000000000000e+7, 4.790016000000000000000e+8, 6.227020800000000000000e+9, 8.717829120000000000000e+10, 1.307674368000000000000e+12, 2.092278988800000000000e+13,
+		3.556874280960000000000e+14, 6.402373705728000000000e+15, 1.216451004088320000000e+17, 2.432902008176640000000e+18, 5.109094217170944000000e+19, 1.124000727777607680000e+21, 2.585201673888497664000e+22, 6.204484017332394393600e+23,
+		1.551121004333098598400e+25, 4.032914611266056355840e+26, 1.088886945041835216077e+28, 3.048883446117138605015e+29, 8.841761993739701954544e+30, 2.652528598121910586363e+32, 8.222838654177922817726e+33, 2.631308369336935301672e+35,
+		8.683317618811886495518e+36, 2.952327990396041408476e+38, 1.033314796638614492967e+40, 3.719933267899012174680e+41, 1.376375309122634504632e+43, 5.230226174666011117600e+44, 2.039788208119744335864e+46, 8.159152832478977343456e+47,
+		3.345252661316380710817e+49, 1.405006117752879898543e+51, 6.041526306337383563736e+52, 2.658271574788448768044e+54, 1.196222208654801945620e+56, 5.502622159812088949850e+57, 2.586232415111681806430e+59, 1.241391559253607267086e+61,
+		6.082818640342675608723e+62, 3.041409320171337804361e+64, 1.551118753287382280224e+66, 8.065817517094387857166e+67, 4.274883284060025564298e+69, 2.308436973392413804721e+71, 1.269640335365827592597e+73, 7.109985878048634518540e+74,
+		4.052691950487721675568e+76, 2.350561331282878571829e+78, 1.386831185456898357379e+80, 8.320987112741390144276e+81, 5.075802138772247988009e+83, 3.146997326038793752565e+85, 1.982608315404440064116e+87, 1.268869321858841641034e+89,
+		8.247650592082470666723e+90, 5.443449390774430640037e+92, 3.647111091818868528825e+94, 2.480035542436830599601e+96, 1.711224524281413113725e+98, 1.197857166996989179607e+100, 8.504785885678623175212e+101, 6.123445837688608686152e+103,
+		4.470115461512684340891e+105, 3.307885441519386412260e+107, 2.480914081139539809195e+109, 1.885494701666050254988e+111, 1.451830920282858696341e+113, 1.132428117820629783146e+115, 8.946182130782975286851e+116, 7.156945704626380229481e+118,
+		5.797126020747367985880e+120, 4.753643337012841748421e+122, 3.945523969720658651190e+124, 3.314240134565353266999e+126, 2.817104114380550276949e+128, 2.422709538367273238177e+130, 2.107757298379527717214e+132, 1.854826422573984391148e+134,
+		1.650795516090846108122e+136, 1.485715964481761497310e+138, 1.352001527678402962552e+140, 1.243841405464130725548e+142, 1.156772507081641574759e+144, 1.087366156656743080274e+146, 1.032997848823905926260e+148, 9.916779348709496892096e+149,
+		9.619275968248211985333e+151, 9.426890448883247745626e+153, 9.332621544394415268170e+155, 9.332621544394415268170e+157, 9.425947759838359420852e+159, 9.614466715035126609269e+161, 9.902900716486180407547e+163, 1.029901674514562762385e+166,
+		1.081396758240290900504e+168, 1.146280563734708354534e+170, 1.226520203196137939352e+172, 1.324641819451828974500e+174, 1.443859583202493582205e+176, 1.588245541522742940425e+178, 1.762952551090244663872e+180, 1.974506857221074023537e+182,
+		2.231192748659813646597e+184, 2.543559733472187557120e+186, 2.925093693493015690688e+188, 3.393108684451898201198e+190, 3.969937160808720895402e+192, 4.684525849754290656574e+194, 5.574585761207605881323e+196, 6.689502913449127057588e+198,
+		8.094298525273443739682e+200, 9.875044200833601362412e+202, 1.214630436702532967577e+205, 1.506141741511140879795e+207, 1.882677176888926099744e+209, 2.372173242880046885677e+211, 3.012660018457659544810e+213, 3.856204823625804217357e+215,
+		4.974504222477287440390e+217, 6.466855489220473672507e+219, 8.471580690878820510985e+221, 1.118248651196004307450e+224, 1.487270706090685728908e+226, 1.992942746161518876737e+228, 2.690472707318050483595e+230, 3.659042881952548657690e+232,
+		5.012888748274991661035e+234, 6.917786472619488492228e+236, 9.615723196941089004197e+238, 1.346201247571752460588e+241, 1.898143759076170969429e+243, 2.695364137888162776589e+245, 3.854370717180072770522e+247, 5.550293832739304789551e+249,
+		8.047926057471991944849e+251, 1.174997204390910823948e+254, 1.727245890454638911203e+256, 2.556323917872865588581e+258, 3.808922637630569726986e+260, 5.713383956445854590479e+262, 8.627209774233240431623e+264, 1.311335885683452545607e+267,
+		2.006343905095682394778e+269, 3.089769613847350887959e+271, 4.789142901463393876336e+273, 7.471062926282894447084e+275, 1.172956879426414428192e+278, 1.853271869493734796544e+280, 2.946702272495038326504e+282, 4.714723635992061322407e+284,
+		7.590705053947218729075e+286, 1.229694218739449434110e+289, 2.004401576545302577600e+291, 3.287218585534296227263e+293, 5.423910666131588774984e+295, 9.003691705778437366474e+297, 1.503616514864999040201e+300, 2.526075744973198387538e+302,
+		4.269068009004705274939e+304, 7.257415615307998967397e+306}));
+	_const_math__log_factorials_table = new_array_from_c_array_noscan(172, 172, sizeof(f64), _MOV((f64[172]){
+		0.000000000000000000000e+0, 0.000000000000000000000e+0, 6.931471805599453094172e-1, 1.791759469228055000812e+0, 3.178053830347945619647e+0, 4.787491742782045994248e+0, 6.579251212010100995060e+0, 8.525161361065414300166e+0, 1.060460290274525022842e+1,
+		1.280182748008146961121e+1, 1.510441257307551529523e+1, 1.750230784587388583929e+1, 1.998721449566188614952e+1, 2.255216385312342288557e+1, 2.519122118273868150009e+1, 2.789927138384089156609e+1, 3.067186010608067280376e+1,
+		3.350507345013688888401e+1, 3.639544520803305357622e+1, 3.933988418719949403622e+1, 4.233561646075348502966e+1, 4.538013889847690802616e+1, 4.847118135183522387964e+1, 5.160667556776437357045e+1, 5.478472939811231919009e+1,
+		5.800360522298051993929e+1, 6.126170176100200198477e+1, 6.455753862700633105895e+1, 6.788974313718153498289e+1, 7.125703896716800901007e+1, 7.465823634883016438549e+1, 7.809222355331531063142e+1, 8.155795945611503717850e+1,
+		8.505446701758151741396e+1, 8.858082754219767880363e+1, 9.213617560368709248333e+1, 9.571969454214320248496e+1, 9.933061245478742692933e+1, 1.029681986145138126988e+2, 1.066317602606434591262e+2, 1.103206397147573954291e+2,
+		1.140342117814617032329e+2, 1.177718813997450715388e+2, 1.215330815154386339623e+2, 1.253172711493568951252e+2, 1.291239336391272148826e+2, 1.329525750356163098828e+2, 1.368027226373263684696e+2, 1.406739236482342593987e+2,
+		1.445657439463448860089e+2, 1.484777669517730320675e+2, 1.524095925844973578392e+2, 1.563608363030787851941e+2, 1.603311282166309070282e+2, 1.643201122631951814118e+2, 1.683274454484276523305e+2, 1.723527971391628015638e+2,
+		1.763958484069973517152e+2, 1.804562914175437710518e+2, 1.845338288614494905025e+2, 1.886281734236715911873e+2, 1.927390472878449024360e+2, 1.968661816728899939914e+2, 2.010093163992815266793e+2, 2.051681994826411985358e+2,
+		2.093425867525368356464e+2, 2.135322414945632611913e+2, 2.177369341139542272510e+2, 2.219564418191303339501e+2, 2.261905483237275933323e+2, 2.304390435657769523214e+2, 2.347017234428182677427e+2, 2.389783895618343230538e+2,
+		2.432688490029827141829e+2, 2.475729140961868839366e+2, 2.518904022097231943772e+2, 2.562211355500095254561e+2, 2.605649409718632093053e+2, 2.649216497985528010421e+2, 2.692910976510198225363e+2, 2.736731242856937041486e+2,
+		2.780675734403661429141e+2, 2.824742926876303960274e+2, 2.868931332954269939509e+2, 2.913239500942703075662e+2, 2.957666013507606240211e+2, 3.002209486470141317540e+2, 3.046868567656687154726e+2, 3.091641935801469219449e+2,
+		3.136528299498790617832e+2, 3.181526396202093268500e+2, 3.226634991267261768912e+2, 3.271852877037752172008e+2, 3.317178871969284731381e+2, 3.362611819791984770344e+2, 3.408150588707990178690e+2, 3.453794070622668541074e+2,
+		3.499541180407702369296e+2, 3.545390855194408088492e+2, 3.591342053695753987760e+2, 3.637393755555634901441e+2, 3.683544960724047495950e+2, 3.729794688856890206760e+2, 3.776141978739186564468e+2, 3.822585887730600291111e+2,
+		3.869125491232175524822e+2, 3.915759882173296196258e+2, 3.962488170517915257991e+2, 4.009309482789157454921e+2, 4.056222961611448891925e+2, 4.103227765269373054205e+2, 4.150323067282496395563e+2, 4.197508055995447340991e+2,
+		4.244781934182570746677e+2, 4.292143918666515701285e+2, 4.339593239950148201939e+2, 4.387129141861211848399e+2, 4.434750881209189409588e+2, 4.482457727453846057188e+2, 4.530248962384961351041e+2, 4.578123879812781810984e+2,
+		4.626081785268749221865e+2, 4.674121995716081787447e+2, 4.722243839269805962399e+2, 4.770446654925856331047e+2, 4.818729792298879342285e+2, 4.867092611368394122258e+2, 4.915534482232980034989e+2, 4.964054784872176206648e+2,
+		5.012652908915792927797e+2, 5.061328253420348751997e+2, 5.110080226652360267439e+2, 5.158908245878223975982e+2, 5.207811737160441513633e+2, 5.256790135159950627324e+2, 5.305842882944334921812e+2, 5.354969431801695441897e+2,
+		5.404169241059976691050e+2, 5.453441777911548737966e+2, 5.502786517242855655538e+2, 5.552202941468948698523e+2, 5.601690540372730381305e+2, 5.651248810948742988613e+2, 5.700877257251342061414e+2, 5.750575390247102067619e+2,
+		5.800342727671307811636e+2, 5.850178793888391176022e+2, 5.900083119756178539038e+2, 5.950055242493819689670e+2, 6.000094705553274281080e+2, 6.050201058494236838580e+2, 6.100373856862386081868e+2, 6.150612662070848845750e+2,
+		6.200917041284773200381e+2, 6.251286567308909491967e+2, 6.301720818478101958172e+2, 6.352219378550597328635e+2, 6.402781836604080409209e+2, 6.453407786934350077245e+2, 6.504096828956552392500e+2, 6.554848567108890661717e+2,
+		6.605662610758735291676e+2, 6.656538574111059132426e+2, 6.707476076119126755767e+2, 6.758474740397368739994e+2, 6.809534195136374546094e+2, 6.860654073019939978423e+2, 6.911834011144107529496e+2, 6.963073650938140118743e+2,
+		7.014372638087370853465e+2, 7.065730622457873471107e+2, 7.117147258022900069535e+2}));
+	_const_math__gamma_p = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){1.60119522476751861407e-04, 1.19135147006586384913e-03, 1.04213797561761569935e-02, 4.76367800457137231464e-02, 2.07448227648435975150e-01, 4.94214826801497100753e-01, 9.99999999999999996796e-01}));
+	_const_math__gamma_q = new_array_from_c_array_noscan(8, 8, sizeof(f64), _MOV((f64[8]){-2.31581873324120129819e-05, 5.39605580493303397842e-04, -4.45641913851797240494e-03, 1.18139785222060435552e-02, 3.58236398605498653373e-02, -2.34591795718243348568e-01, 7.14304917030273074085e-02, 1.00000000000000000320e+00}));
+	_const_math__gamma_s = new_array_from_c_array_noscan(5, 5, sizeof(f64), _MOV((f64[5]){7.87311395793093628397e-04, -2.29549961613378126380e-04, -2.68132617805781232825e-03, 3.47222221605458667310e-03, 8.33333333333482257126e-02}));
+	_const_math__lgamma_a = new_array_from_c_array_noscan(12, 12, sizeof(f64), _MOV((f64[12]){
+		7.72156649015328655494e-02, 3.22467033424113591611e-01, 6.73523010531292681824e-02, 2.05808084325167332806e-02, 7.38555086081402883957e-03, 2.89051383673415629091e-03, 1.19270763183362067845e-03, 5.10069792153511336608e-04, 2.20862790713908385557e-04,
+		1.08011567247583939954e-04, 2.52144565451257326939e-05, 4.48640949618915160150e-05}));
+	_const_math__lgamma_r = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){1.0, 1.39200533467621045958e+00, 7.21935547567138069525e-01, 1.71933865632803078993e-01, 1.86459191715652901344e-02, 7.77942496381893596434e-04, 7.32668430744625636189e-06}));
+	_const_math__lgamma_s = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){-7.72156649015328655494e-02, 2.14982415960608852501e-01, 3.25778796408930981787e-01, 1.46350472652464452805e-01, 2.66422703033638609560e-02, 1.84028451407337715652e-03, 3.19475326584100867617e-05}));
+	_const_math__lgamma_t = new_array_from_c_array_noscan(15, 15, sizeof(f64), _MOV((f64[15]){
+		4.83836122723810047042e-01, -1.47587722994593911752e-01, 6.46249402391333854778e-02, -3.27885410759859649565e-02, 1.79706750811820387126e-02, -1.03142241298341437450e-02, 6.10053870246291332635e-03, -3.68452016781138256760e-03, 2.25964780900612472250e-03,
+		-1.40346469989232843813e-03, 8.81081882437654011382e-04, -5.38595305356740546715e-04, 3.15632070903625950361e-04, -3.12754168375120860518e-04, 3.35529192635519073543e-04}));
+	_const_math__lgamma_u = new_array_from_c_array_noscan(6, 6, sizeof(f64), _MOV((f64[6]){-7.72156649015328655494e-02, 6.32827064025093366517e-01, 1.45492250137234768737e+00, 9.77717527963372745603e-01, 2.28963728064692451092e-01, 1.33810918536787660377e-02}));
+	_const_math__lgamma_v = new_array_from_c_array_noscan(6, 6, sizeof(f64), _MOV((f64[6]){1.0, 2.45597793713041134822e+00, 2.12848976379893395361e+00, 7.69285150456672783825e-01, 1.04222645593369134254e-01, 3.21709242282423911810e-03}));
+	_const_math__lgamma_w = new_array_from_c_array_noscan(7, 7, sizeof(f64), _MOV((f64[7]){4.18938533204672725052e-01, 8.33333333333329678849e-02, -2.77777777728775536470e-03, 7.93650558643019558500e-04, -5.95187557450339963135e-04, 8.36339918996282139126e-04, -1.63092934096575273989e-03}));
+	_const_math__pow10tab = new_array_from_c_array_noscan(32, 32, sizeof(f64), _MOV((f64[32]){
+		((f64)(1e+00)), 1e+01, 1e+02, 1e+03, 1e+04, 1e+05, 1e+06, 1e+07, 1e+08,
+		1e+09, 1e+10, 1e+11, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16,
+		1e+17, 1e+18, 1e+19, 1e+20, 1e+21, 1e+22, 1e+23, 1e+24,
+		1e+25, 1e+26, 1e+27, 1e+28, 1e+29, 1e+30, 1e+31}));
+	_const_math__pow10postab32 = new_array_from_c_array_noscan(10, 10, sizeof(f64), _MOV((f64[10]){
+		((f64)(1e+00)), 1e+32, 1e+64, 1e+96, 1e+128, 1e+160, 1e+192, 1e+224, 1e+256,
+		1e+288}));
+	_const_math__pow10negtab32 = new_array_from_c_array_noscan(11, 11, sizeof(f64), _MOV((f64[11]){
+		((f64)(1e-00)), 1e-32, 1e-64, 1e-96, 1e-128, 1e-160, 1e-192, 1e-224, 1e-256,
+		1e-288, 1e-320}));
+	_const_math__sin_data = new_array_from_c_array_noscan(12, 12, sizeof(f64), _MOV((f64[12]){
+		-0.3295190160663511504173, 0.0025374284671667991990, 0.0006261928782647355874, -4.6495547521854042157541e-06, -5.6917531549379706526677e-07, 3.7283335140973803627866e-09, 3.0267376484747473727186e-10, -1.7400875016436622322022e-12, -1.0554678305790849834462e-13,
+		5.3701981409132410797062e-16, 2.5984137983099020336115e-17, -1.1821555255364833468288e-19}));
+	_const_math__cos_data = new_array_from_c_array_noscan(11, 11, sizeof(f64), _MOV((f64[11]){
+		0.165391825637921473505668118136, -0.00084852883845000173671196530195, -0.000210086507222940730213625768083, 1.16582269619760204299639757584e-6, 1.43319375856259870334412701165e-7, -7.4770883429007141617951330184e-10, -6.0969994944584252706997438007e-11, 2.90748249201909353949854872638e-13, 1.77126739876261435667156490461e-14,
+		-7.6896421502815579078577263149e-17, -3.7363121133079412079201377318e-18}));
+	_const_math__tan_p = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){-1.30936939181383777646e+4, 1.15351664838587416140e+6, -1.79565251976484877988e+7}));
+	_const_math__tan_q = new_array_from_c_array_noscan(5, 5, sizeof(f64), _MOV((f64[5]){1.00000000000000000000e+0, 1.36812963470692954678e+4, -1.32089234440210967447e+6, 2.50083801823357915839e+7, -5.38695755929454629881e+7}));
+	_const_math__tanh_p = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){-9.64399179425052238628e-1, -9.92877231001918586564e+1, -1.61468768441708447952e+3}));
+	_const_math__tanh_q = new_array_from_c_array_noscan(3, 3, sizeof(f64), _MOV((f64[3]){1.12811678491632931402e+2, 2.23548839060100448583e+3, 4.84406305325125486048e+3}));
+{
+	_const_math__sin_cs = ((math__ChebSeries){.c = _const_math__sin_data,.order = 11,.a = -1,.b = 1,});
+}
+{
+	_const_math__cos_cs = ((math__ChebSeries){.c = _const_math__cos_data,.order = 10,.a = -1,.b = 1,});
 }
 	// Initializations of consts for module os
 	_const_os__fslash_str = _SLIT("/");
